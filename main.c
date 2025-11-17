@@ -247,7 +247,7 @@ void load_css(void) {
         "    border-radius: 8px;"
         "    padding: 10px 16px;"
         "    color: #ffffff;"
-        "    border: 5px solid red; /* --- DEBUG: Check if this appears --- */"
+        "    border: none;"
         "    margin-top: 10px;"
         "    transition: background-color 0.2s ease-in-out;"
         "}"
