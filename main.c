@@ -1,3 +1,19 @@
+/*
+ * GTK3 Number Guessing Game
+ *
+ * This C program implements the number guessing game logic in a modern
+ * GTK3 graphical user interface, styled to match your screenshots.
+ *
+ * --- How to Compile ---
+ * On a Linux system with GTK3 development libraries installed, you can
+ * compile this program with the following command:
+ *
+ * gcc -o gtk_game gtk_game.c $(pkg-config --cflags --libs gtk+-3.0)
+ *
+ * Then, run the compiled program:
+ * ./gtk_game
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,9 +140,11 @@ void on_guess_clicked(GtkButton *button, gpointer user_data) {
         } else {
             // --- Win Condition ---
             const char *performance = get_performance(data->guess_count);
-            feedback_text = g_strdup_printf("Congratulations!!\nYou guessed the number %d in %d guesses.\nYour performance is: %s",
+            // Updated format to match screenshot
+            feedback_text = g_strdup_printf("<span size='large' weight='bold'>Congratulations!!</span>\n\nYou guessed the number %d in %d guesses.\nYour performance is: <span weight='bold'>%s</span>",
                                             guessed_num, data->guess_count, performance);
-            gtk_label_set_text(GTK_LABEL(data->feedback_label), feedback_text);
+            // Use Pango markup to allow rich text
+            gtk_label_set_markup(GTK_LABEL(data->feedback_label), feedback_text);
             gtk_style_context_add_class(context, "success");
 
             // Disable guessing and show "Play Again"
@@ -135,17 +153,24 @@ void on_guess_clicked(GtkButton *button, gpointer user_data) {
             gtk_widget_hide(data->guess_box);
             gtk_widget_show(data->play_again_button);
         }
-        g_free(feedback_text);
+        // Only free if not the success case (since set_markup was not used)
+        if (data->random_num != guessed_num) {
+            g_free(feedback_text);
+        }
     }
 
     // Clear the guess entry and refocus it
-    gtk_entry_set_text(GTK_ENTRY(data->guess_entry), "");
-    gtk_widget_grab_focus(data->guess_entry);
+    if (data->random_num != guessed_num) {
+         gtk_entry_set_text(GTK_ENTRY(data->guess_entry), "");
+         gtk_widget_grab_focus(data->guess_entry);
+    }
 }
 
 // Called when the "Play Again?" button is clicked
 void on_play_again_clicked(GtkButton *button, gpointer user_data) {
     GameData *data = (GameData *)user_data;
+    // When playing again, must reset the label to not use markup
+    gtk_label_set_markup(GTK_LABEL(data->feedback_label), ""); // Clear markup
     start_new_game(data);
 }
 
@@ -161,16 +186,16 @@ void load_css(void) {
                                               GTK_STYLE_PROVIDER(provider),
                                               GTK_STYLE_PROVIDER_PRIORITY_USER);
     
-    // This CSS mimics the Tailwind styling from the web version
+    // This CSS is modified to match your latest screenshots
     const char *css =
         "/* --- Global Window --- */"
         ".window {"
-        "    background-color: 	#c0c5ce; /* bg-gray-100 */"
+        "    background-color: 	#d9d9d9; /* bg-gray-100 */"
         "}"
         "/* --- Main Card --- */"
         "#main_card {"
         "    background-color: #ffffff; /* bg-white */"
-        "    border-radius: 12px;"
+        "    border-radius: 10px;"
         "    padding: 24px;"
         "    border: 1px solid #e5e7eb;"
         "}"
@@ -179,22 +204,24 @@ void load_css(void) {
         "    font-size: 22pt;"
         "    font-weight: bold;"
         "    margin-bottom: 16px;"
+        "    color: #1f2937; /* Darker text */"
         "}"
-        "/* --- Standard Labels --- */"
+        "/* --- Standard Labels (e.g., 'Your Name:') --- */"
         "label {"
         "    font-size: 11pt;"
-        "    opacity: 0.8;"
+        "    color: #000000; /* Gray text */"
         "    margin-top: 8px;"
         "}"
         "/* --- Entry Fields --- */"
         "entry {"
         "    font-size: 11pt;"
-        "    padding: 8px;"
+        "    padding: 8px 12px;"
         "    border: 1px solid #d1d5db; /* border-gray-300 */"
         "    border-radius: 8px;"
         "}"
         "entry:focus {"
         "    border: 2px solid #3b82f6; /* focus:ring-blue-500 */"
+        "    padding: 7px 11px;"
         "}"
         "/* --- Buttons --- */"
         "button {"
@@ -207,32 +234,39 @@ void load_css(void) {
         "    margin-top: 10px;"
         "}"
         "button:hover { background-image: image(rgba(0,0,0,0.1)); }"
-        "#start_game_button, #guess_button {"
-        "    background-color: #2563eb; /* bg-blue-600 */"
-        "}"
-        "#play_again_button {"
-        "    background-color: #16a34a; /* bg-green-600 */"
+        "#start_game_button, #guess_button, #play_again_button {"
+        "    background-color: #467cefff; /* bg-blue-600 */"
         "}"
         "/* --- Feedback/Error Labels --- */"
         "#name_error_label {"
         "    color: #ef4444; /* text-red-500 */"
-        "    font-size: 10pt;"
+        "    font-size: 12pt;"
         "    margin-top: 8px;"
         "}"
+        "/* Default feedback label ('It's your turn...') */"
         "#feedback_label {"
-        "    background-color: #f9fafb; /* bg-gray-50 */"
-        "    font-size: 12pt;"
+        "    font-size: 14pt;"
         "    font-weight: 500;"
-        "    border-radius: 8px;"
-        "    padding: 16px;"
+        "    color: #4a4a4a; /* Dark gray text */"
         "    min-height: 70px;"
+        "    padding: 16px 0; /* Vertical padding only */"
         "    margin-top: 10px;"
+        "}"
+        "/* Feedback label when showing a result (warning, error, success) */"
+        "#feedback_label.warning, #feedback_label.error, #feedback_label.success {"
+        "    background-color: 		#b3b3b3; /* bg-gray-50 */"
+        "    border-radius: 8px;"
+        "    padding: 16px;" /* Full padding */
         "}"
         "/* --- Feedback Colors --- */"
         "#feedback_label.warning { color: #ca8a04; } /* text-yellow-600 */"
         "#feedback_label.error { color: #dc2626; } /* text-red-600 */"
         "#feedback_label.success { color: #16a34a; } /* text-green-600 */"
-        "#welcome_label { font-size: 13pt; margin-bottom: 12px; }";
+        "#welcome_label {"
+        "    font-size: 14pt;"
+        "    margin-bottom: 12px;"
+        "    color: #374151;"
+        "}";
 
     gtk_css_provider_load_from_data(provider, css, -1, NULL);
     g_object_unref(provider);
@@ -278,22 +312,20 @@ GtkWidget* create_game_screen(GameData *data) {
     data->welcome_label = gtk_label_new("");
     gtk_widget_set_name(data->welcome_label, "welcome_label"); // For CSS
     gtk_label_set_justify(GTK_LABEL(data->welcome_label), GTK_JUSTIFY_CENTER);
+    gtk_label_set_line_wrap(GTK_LABEL(data->welcome_label), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), data->welcome_label, FALSE, FALSE, 0);
-
-    // --- Guess Input Box (HBox) ---
-    hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    data->guess_box = hbox; // Save pointer to show/hide
 
     label = gtk_label_new("Your Guess:");
     gtk_widget_set_halign(label, GTK_ALIGN_START);
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
+    // --- Guess Input Box (HBox) ---
+    // This HBox contains the guess entry and guess button
+    hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    data->guess_box = hbox; // Save pointer to show/hide
+
     data->guess_entry = gtk_entry_new();
     gtk_entry_set_placeholder_text(GTK_ENTRY(data->guess_entry), "1-100");
-    // Restrict entry to numbers only
-    GtkEntryBuffer *buffer = gtk_entry_get_buffer(GTK_ENTRY(data->guess_entry));
-    // gtk_entry_buffer_set_bytes(buffer, "0123456789", 0); // This was incorrect, remove it.
-    // The validation logic in on_guess_clicked already handles non-numeric input.
     gtk_box_pack_start(GTK_BOX(hbox), data->guess_entry, TRUE, TRUE, 0);
 
     data->guess_button = gtk_button_new_with_label("Guess");
@@ -338,6 +370,8 @@ void activate(GtkApplication *app, gpointer user_data) {
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Number Guessing Game");
     gtk_window_set_default_size(GTK_WINDOW(window), 400, 300);
+    // Allow the window to be resizable
+    gtk_window_set_resizable(GTK_WINDOW(window), TRUE);
     gtk_widget_set_name(window, "window"); // For CSS background
 
     // Create the central white card (a GtkBox)
@@ -377,6 +411,9 @@ void activate(GtkApplication *app, gpointer user_data) {
     // Hide widgets that should not be visible at start
     gtk_widget_hide(data->name_error_label);
     gtk_widget_hide(data->play_again_button);
+    
+    // Set focus to the name entry on start
+    gtk_widget_grab_focus(data->name_entry);
 }
 
 // --- Main Program Entry ---
