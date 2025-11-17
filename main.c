@@ -16,7 +16,7 @@ typedef struct {
     GtkWidget *name_entry;
     GtkWidget *name_error_label;
     GtkWidget *welcome_label;
-    GtkWidget *your_guess_label; // NEW: Pointer to "Your Guess:" label
+    GtkWidget *your_guess_label; // Pointer to "Your Guess:" label
     GtkWidget *guess_entry;
     GtkWidget *feedback_label;
     GtkWidget *guess_button;
@@ -43,7 +43,7 @@ void start_new_game(GameData *data) {
     data->guess_count = 0;
 
     // Update welcome message
-    gchar *welcome_text = g_strdup_printf("Welcome, %s! \nI'm thinking of a secret number from 1 to 100. \nCan you read my mind?", data->player_name);
+    gchar *welcome_text = g_strdup_printf("Welcome, %s! I'm thinking of a secret number from 1 to 100. Can you read my mind?", data->player_name);
     gtk_label_set_text(GTK_LABEL(data->welcome_label), welcome_text);
     g_free(welcome_text);
 
@@ -57,7 +57,7 @@ void start_new_game(GameData *data) {
     gtk_style_context_remove_class(context, "warning");
     gtk_style_context_remove_class(context, "error");
 
-    // --- MODIFIED: Show elements for a new game ---
+    // Show elements for a new game
     gtk_widget_show(data->welcome_label); // Show welcome label
     gtk_widget_show(data->your_guess_label); // Show "Your Guess:" label
     gtk_widget_show(data->guess_box); // Show the guess entry and button
@@ -122,12 +122,12 @@ void on_guess_clicked(GtkButton *button, gpointer user_data) {
         } else {
             // --- Win Condition ---
             const char *performance = get_performance(data->guess_count);
-            feedback_text = g_strdup_printf("<span size='large' weight='bold'>You Got It, %s!</span>\n\nYou found the secret number %d in %d guesses.\nYour performance is: <span weight='bold'>%s</span>",
+            feedback_text = g_strdup_printf("<span size='large' weight='bold'>Bullseye, %s!</span>\n\nYou found the secret number %d in %d guesses.\nYour performance is: <span weight='bold'>%s</span>",
                                             data->player_name, guessed_num, data->guess_count, performance);
             gtk_label_set_markup(GTK_LABEL(data->feedback_label), feedback_text);
             gtk_style_context_add_class(context, "success");
 
-            // --- MODIFIED: Hide unnecessary elements on win ---
+            // Hide unnecessary elements on win
             gtk_widget_set_sensitive(data->guess_entry, FALSE);
             gtk_widget_set_sensitive(data->guess_button, FALSE);
             gtk_widget_hide(data->guess_box);
@@ -165,7 +165,7 @@ void load_css(void) {
                                               GTK_STYLE_PROVIDER(provider),
                                               GTK_STYLE_PROVIDER_PRIORITY_USER);
     
-    // This CSS is unchanged from your original file
+    // --- CSS UPDATED WITH YOUR NEW BUTTON STYLES ---
     const char *css =
         "/* --- Global Window --- */"
         ".window {"
@@ -218,9 +218,9 @@ void load_css(void) {
         "    border-color: #e5e7eb;"
         "}"
         ""
-        "/* --- Buttons --- */"
+        "/* --- Buttons (YOUR NEW STYLES) --- */"
         "button {"
-        "    font-size: 11pt;"
+        "    font-size: 12pt;"
         "    font-weight: bold;"
         "    border-radius: 8px;"
         "    padding: 10px 16px;"
@@ -228,24 +228,33 @@ void load_css(void) {
         "    border: none;"
         "    margin-top: 10px;"
         "    transition: background-color 0.2s ease-in-out;"
+        "    background-image: none; /* Remove default theme gradient */"
         "}"
         ""
         "button:hover { "
         "    background-color: #60a5fa; /* Light blue on hover */"
+        "    /* background-image: none; (This rule is not needed here) */"
         "}"
         ""
         "button:active {"
-        "    background-color: #2563eb; /* Darker blue when pressed */"
+        "    background-color: #00277c; /* Darker blue when pressed (was #00277cff) */"
         "}"
         ""
         "button:disabled {"
-        "    background-color: #d1d5db; /* bg-gray-300 */"
-        "    color: #f9fafb; /* text-gray-50 */"
+        "    background-color: #0b61e1; /* bg-gray-300 (was #0b61e1ff) */"
+        "    color: #ffffff; /* text-gray-50 (was #ffffffff) */"
         "    background-image: none; /* No hover/active effect when disabled */"
         "}"
         ""
         "#start_game_button, #guess_button, #play_again_button {"
-        "    background-color: #3b82f6; /* Main blue color */"
+        "    background-color: #105cd7; /* Main blue color (was #105cd7ff) */"
+        "    background-image: none; /* Ensure no gradient */"
+        "}"
+        ""
+        "/* --- NEW RULE: Specific hover for buttons by ID --- */"
+        "#start_game_button:hover, #guess_button:hover, #play_again_button:hover {"
+        "    background-color: #60a5fa; /* Light blue on hover */"
+        "    background-image: none; /* Ensure no gradient */"
         "}"
         ""
         "/* --- Feedback/Error Labels --- */"
@@ -319,7 +328,7 @@ GtkWidget* create_name_screen(GameData *data) {
 
 // Builds the "Main Game" screen
 GtkWidget* create_game_screen(GameData *data) {
-    GtkWidget *vbox, *hbox; // Removed `label` from here, as we now use `data->your_guess_label`
+    GtkWidget *vbox, *hbox; 
 
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
 
@@ -329,7 +338,6 @@ GtkWidget* create_game_screen(GameData *data) {
     gtk_label_set_line_wrap(GTK_LABEL(data->welcome_label), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), data->welcome_label, FALSE, FALSE, 0);
 
-    // --- MODIFIED: Assign "Your Guess:" label to data->your_guess_label ---
     data->your_guess_label = gtk_label_new("Your Guess:");
     gtk_widget_set_halign(data->your_guess_label, GTK_ALIGN_START);
     gtk_box_pack_start(GTK_BOX(vbox), data->your_guess_label, FALSE, FALSE, 0);
