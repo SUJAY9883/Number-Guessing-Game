@@ -1,20 +1,3 @@
-/*
- * GTK3 Number Guessing Game
- *
- * This C program implements the number guessing game logic in a modern
- * GTK3 graphical user interface, styled to match your screenshots.
- *
- * --- How to Compile ---
- * On a Linux system with GTK3 development libraries installed, you can
- * compile this program with the following command:
- *
- * gcc -o gtk_game gtk_game.c $(pkg-config --cflags --libs gtk+-3.0)
- *
- * Then, run the compiled program:
- * ./gtk_game
- *
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,12 +28,12 @@ typedef struct {
 
 // Returns a performance string based on the guess count
 const char* get_performance(int count) {
-    if (count >= 1 && count <= 3) return "Outstanding!";
-    if (count > 3 && count <= 5) return "Excellent!";
-    if (count > 5 && count <= 7) return "Good!";
-    if (count > 7 && count <= 10) return "Average!";
-    if (count > 10 && count <= 15) return "Okay!";
-    return "Bad!";
+    // --- NEW JOYFUL PERFORMANCE RANKS ---
+    if (count == 1) return "IMPOSSIBLE! Are you psychic?!";
+    if (count >= 2 && count <= 4) return "Mastermind!";
+    if (count >= 5 && count <= 7) return "Amazing Job!";
+    if (count >= 8 && count <= 10) return "Well Done!";
+    return "Phew! You got it just in time!";
 }
 
 // Resets the game state for a new round
@@ -59,13 +42,15 @@ void start_new_game(GameData *data) {
     data->random_num = (rand() % 100) + 1;
     data->guess_count = 0;
 
+    // --- NEW JOYFUL TEXT ---
     // Update welcome message
-    gchar *welcome_text = g_strdup_printf("Hello %s! I've picked a number (1-100). Try to guess it!", data->player_name);
+    gchar *welcome_text = g_strdup_printf("Welcome, %s! \nI'm thinking of a secret number from 1 to 100. \nCan you read my mind?", data->player_name);
     gtk_label_set_text(GTK_LABEL(data->welcome_label), welcome_text);
     g_free(welcome_text);
 
+    // --- NEW JOYFUL TEXT ---
     // Reset UI elements
-    gtk_label_set_text(GTK_LABEL(data->feedback_label), "It's your turn...");
+    gtk_label_set_text(GTK_LABEL(data->feedback_label), "What's your first guess? Let's see...");
     gtk_entry_set_text(GTK_ENTRY(data->guess_entry), "");
     
     // Remove any previous color styling from feedback
@@ -94,8 +79,9 @@ void on_start_game_clicked(GtkButton *button, gpointer user_data) {
     const gchar *name = gtk_entry_get_text(GTK_ENTRY(data->name_entry));
 
     if (strlen(name) == 0) {
+        // --- NEW JOYFUL TEXT ---
         // Show error if name is empty
-        gtk_label_set_text(GTK_LABEL(data->name_error_label), "NAME CANNOT BE EMPTY. ENTER YOUR NAME:");
+        gtk_label_set_text(GTK_LABEL(data->name_error_label), "Whoops! I need a name to cheer for. Please enter one!");
         gtk_widget_show(data->name_error_label);
     } else {
         // Store name, hide error, start the game, and switch screens
@@ -120,7 +106,8 @@ void on_guess_clicked(GtkButton *button, gpointer user_data) {
 
     // --- Validation ---
     if (guessed_num < 1 || guessed_num > 100) {
-        gchar *feedback_text = g_strdup_printf("You entered %s. This is invalid!\nPlease enter a number from 1 to 100.", text);
+        // --- NEW JOYFUL TEXT ---
+        gchar *feedback_text = g_strdup_printf("Whoa there! That's not in the rulebook.\nPlease enter a number from 1 to 100.");
         gtk_label_set_text(GTK_LABEL(data->feedback_label), feedback_text);
         g_free(feedback_text);
         gtk_style_context_add_class(context, "error");
@@ -130,19 +117,21 @@ void on_guess_clicked(GtkButton *button, gpointer user_data) {
         gchar *feedback_text;
 
         if (data->random_num > guessed_num) {
-            feedback_text = g_strdup_printf("Too low! Try a higher number than %d.", guessed_num);
+            // --- NEW JOYFUL TEXT ---
+            feedback_text = g_strdup_printf("That's too low! Aim a little higher.");
             gtk_label_set_text(GTK_LABEL(data->feedback_label), feedback_text);
             gtk_style_context_add_class(context, "warning");
         } else if (data->random_num < guessed_num) {
-            feedback_text = g_strdup_printf("Too high! Try a lower number than %d.", guessed_num);
+            // --- NEW JOYFUL TEXT ---
+            feedback_text = g_strdup_printf("Overshot it! Try a smaller number.");
             gtk_label_set_text(GTK_LABEL(data->feedback_label), feedback_text);
             gtk_style_context_add_class(context, "warning");
         } else {
             // --- Win Condition ---
             const char *performance = get_performance(data->guess_count);
-            // Updated format to match screenshot
-            feedback_text = g_strdup_printf("<span size='large' weight='bold'>Congratulations!!</span>\n\nYou guessed the number %d in %d guesses.\nYour performance is: <span weight='bold'>%s</span>",
-                                            guessed_num, data->guess_count, performance);
+            // --- NEW JOYFUL TEXT (with player name) ---
+            feedback_text = g_strdup_printf("<span size='large' weight='bold'>You Got It, %s!</span>\n\nYou found the secret number %d in %d guesses.\nYour performance is: <span weight='bold'>%s</span>",
+                                            data->player_name, guessed_num, data->guess_count, performance);
             // Use Pango markup to allow rich text
             gtk_label_set_markup(GTK_LABEL(data->feedback_label), feedback_text);
             gtk_style_context_add_class(context, "success");
@@ -186,12 +175,11 @@ void load_css(void) {
                                               GTK_STYLE_PROVIDER(provider),
                                               GTK_STYLE_PROVIDER_PRIORITY_USER);
     
-    // *** MODIFIED CSS BLOCK ***
-    // This CSS has been updated with hover, active, and disabled states
+    // This CSS is unchanged from your original file
     const char *css =
         "/* --- Global Window --- */"
         ".window {"
-        "    background-color:  #d9d9d9; /* bg-gray-100 */"
+        "    background-color:   #d9d9d9; /* bg-gray-100 */"
         "}"
         ""
         "/* --- Main Card --- */"
@@ -304,7 +292,6 @@ void load_css(void) {
         "    margin-bottom: 12px;"
         "    color: #374151;"
         "}";
-    // *** END OF MODIFIED CSS BLOCK ***
 
     gtk_css_provider_load_from_data(provider, css, -1, NULL);
     g_object_unref(provider);
@@ -316,12 +303,14 @@ GtkWidget* create_name_screen(GameData *data) {
 
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
 
-    label = gtk_label_new("Your Name:");
+    // --- NEW JOYFUL TEXT ---
+    label = gtk_label_new("What should I call you, challenger?");
     gtk_widget_set_halign(label, GTK_ALIGN_START);
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
     data->name_entry = gtk_entry_new();
-    gtk_entry_set_placeholder_text(GTK_ENTRY(data->name_entry), "Enter your name...");
+    // --- NEW JOYFUL TEXT ---
+    gtk_entry_set_placeholder_text(GTK_ENTRY(data->name_entry), "Enter your legendary name...");
     gtk_box_pack_start(GTK_BOX(vbox), data->name_entry, FALSE, FALSE, 0);
 
     button = gtk_button_new_with_label("Start Game");
@@ -377,7 +366,8 @@ GtkWidget* create_game_screen(GameData *data) {
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     // --- Feedback Area ---
-    data->feedback_label = gtk_label_new("It's your turn...");
+    // --- NEW JOYFUL TEXT ---
+    data->feedback_label = gtk_label_new("What's your first guess? Let's see...");
     gtk_widget_set_name(data->feedback_label, "feedback_label"); // For CSS
     gtk_label_set_justify(GTK_LABEL(data->feedback_label), GTK_JUSTIFY_CENTER);
     gtk_label_set_line_wrap(GTK_LABEL(data->feedback_label), TRUE);
