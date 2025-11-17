@@ -43,7 +43,7 @@ void start_new_game(GameData *data) {
     data->guess_count = 0;
 
     // Update welcome message
-    gchar *welcome_text = g_strdup_printf("Welcome, %s! I'm thinking of a secret number from 1 to 100. Can you read my mind?", data->player_name);
+    gchar *welcome_text = g_strdup_printf("Welcome, %s! \nI'm thinking of a secret number from 1 to 100. \nCan you read my mind?", data->player_name);
     gtk_label_set_text(GTK_LABEL(data->welcome_label), welcome_text);
     g_free(welcome_text);
 
@@ -122,7 +122,7 @@ void on_guess_clicked(GtkButton *button, gpointer user_data) {
         } else {
             // --- Win Condition ---
             const char *performance = get_performance(data->guess_count);
-            feedback_text = g_strdup_printf("<span size='large' weight='bold'>Bullseye, %s!</span>\n\nYou found the secret number %d in %d guesses.\nYour performance is: <span weight='bold'>%s</span>",
+            feedback_text = g_strdup_printf("<span size='large' weight='bold'>You Got It, %s!</span>\n\nYou found the secret number %d in %d guesses.\nYour performance is: <span weight='bold'>%s</span>",
                                             data->player_name, guessed_num, data->guess_count, performance);
             gtk_label_set_markup(GTK_LABEL(data->feedback_label), feedback_text);
             gtk_style_context_add_class(context, "success");
@@ -224,7 +224,7 @@ void load_css(void) {
         "    font-weight: bold;"
         "    border-radius: 8px;"
         "    padding: 10px 16px;"
-        "    color: #ffffff;"
+        "    color: #ffffff !important;" /* Default white text */
         "    border: none;"
         "    margin-top: 10px;"
         "    transition: background-color 0.2s ease-in-out;"
@@ -233,22 +233,22 @@ void load_css(void) {
         ""
         "button:hover { "
         "    background-color: #60a5fa; /* Light blue on hover */"
-        "    /* background-image: none; (This rule is not needed here) */"
         "}"
         ""
         "button:active {"
-        "    background-color: #00277c; /* Darker blue when pressed (was #00277cff) */"
+        "    background-color: #00277c; /* Darker blue when pressed */"
         "}"
         ""
         "button:disabled {"
-        "    background-color: #0b61e1; /* bg-gray-300 (was #0b61e1ff) */"
-        "    color: #ffffff; /* text-gray-50 (was #ffffffff) */"
+        "    background-color: #0b61e1; /* bg-gray-300 */"
+        "    color: #ffffff; /* White text for disabled buttons too */"
         "    background-image: none; /* No hover/active effect when disabled */"
         "}"
         ""
         "#start_game_button, #guess_button, #play_again_button {"
-        "    background-color: #105cd7; /* Main blue color (was #105cd7ff) */"
+        "    background-color: #105cd7; /* Main blue color */"
         "    background-image: none; /* Ensure no gradient */"
+        "    color: #ffffff; /* <--- ADDED THIS FOR EXPLICIT WHITE TEXT */"
         "}"
         ""
         "/* --- NEW RULE: Specific hover for buttons by ID --- */"
