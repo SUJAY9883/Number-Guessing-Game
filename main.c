@@ -16,6 +16,7 @@ typedef struct {
     GtkWidget *name_entry;
     GtkWidget *name_error_label;
     GtkWidget *welcome_label;
+    GtkWidget *your_guess_label; // NEW: Pointer to "Your Guess:" label
     GtkWidget *guess_entry;
     GtkWidget *feedback_label;
     GtkWidget *guess_button;
@@ -28,7 +29,6 @@ typedef struct {
 
 // Returns a performance string based on the guess count
 const char* get_performance(int count) {
-    // --- NEW JOYFUL PERFORMANCE RANKS ---
     if (count == 1) return "IMPOSSIBLE! Are you psychic?!";
     if (count >= 2 && count <= 4) return "Mastermind!";
     if (count >= 5 && count <= 7) return "Amazing Job!";
@@ -42,13 +42,11 @@ void start_new_game(GameData *data) {
     data->random_num = (rand() % 100) + 1;
     data->guess_count = 0;
 
-    // --- NEW JOYFUL TEXT ---
     // Update welcome message
     gchar *welcome_text = g_strdup_printf("Welcome, %s! \nI'm thinking of a secret number from 1 to 100. \nCan you read my mind?", data->player_name);
     gtk_label_set_text(GTK_LABEL(data->welcome_label), welcome_text);
     g_free(welcome_text);
 
-    // --- NEW JOYFUL TEXT ---
     // Reset UI elements
     gtk_label_set_text(GTK_LABEL(data->feedback_label), "What's your first guess? Let's see...");
     gtk_entry_set_text(GTK_ENTRY(data->guess_entry), "");
@@ -59,9 +57,11 @@ void start_new_game(GameData *data) {
     gtk_style_context_remove_class(context, "warning");
     gtk_style_context_remove_class(context, "error");
 
-    // Show the guess box (entry + button) and hide play again
-    gtk_widget_show(data->guess_box);
-    gtk_widget_hide(data->play_again_button);
+    // --- MODIFIED: Show elements for a new game ---
+    gtk_widget_show(data->welcome_label); // Show welcome label
+    gtk_widget_show(data->your_guess_label); // Show "Your Guess:" label
+    gtk_widget_show(data->guess_box); // Show the guess entry and button
+    gtk_widget_hide(data->play_again_button); // Hide play again button
     
     // Re-enable guessing
     gtk_widget_set_sensitive(data->guess_entry, TRUE);
@@ -79,12 +79,9 @@ void on_start_game_clicked(GtkButton *button, gpointer user_data) {
     const gchar *name = gtk_entry_get_text(GTK_ENTRY(data->name_entry));
 
     if (strlen(name) == 0) {
-        // --- NEW JOYFUL TEXT ---
-        // Show error if name is empty
         gtk_label_set_text(GTK_LABEL(data->name_error_label), "Whoops! I need a name to cheer for. Please enter one!");
         gtk_widget_show(data->name_error_label);
     } else {
-        // Store name, hide error, start the game, and switch screens
         g_strlcpy(data->player_name, name, sizeof(data->player_name));
         gtk_widget_hide(data->name_error_label);
         start_new_game(data);
@@ -98,7 +95,6 @@ void on_guess_clicked(GtkButton *button, gpointer user_data) {
     const gchar *text = gtk_entry_get_text(GTK_ENTRY(data->guess_entry));
     int guessed_num = atoi(text);
 
-    // Get style context for feedback label to change its color
     GtkStyleContext *context = gtk_widget_get_style_context(data->feedback_label);
     gtk_style_context_remove_class(context, "success");
     gtk_style_context_remove_class(context, "warning");
@@ -106,7 +102,6 @@ void on_guess_clicked(GtkButton *button, gpointer user_data) {
 
     // --- Validation ---
     if (guessed_num < 1 || guessed_num > 100) {
-        // --- NEW JOYFUL TEXT ---
         gchar *feedback_text = g_strdup_printf("Whoa there! That's not in the rulebook.\nPlease enter a number from 1 to 100.");
         gtk_label_set_text(GTK_LABEL(data->feedback_label), feedback_text);
         g_free(feedback_text);
@@ -117,38 +112,34 @@ void on_guess_clicked(GtkButton *button, gpointer user_data) {
         gchar *feedback_text;
 
         if (data->random_num > guessed_num) {
-            // --- NEW JOYFUL TEXT ---
             feedback_text = g_strdup_printf("That's too low! Aim a little higher.");
             gtk_label_set_text(GTK_LABEL(data->feedback_label), feedback_text);
             gtk_style_context_add_class(context, "warning");
         } else if (data->random_num < guessed_num) {
-            // --- NEW JOYFUL TEXT ---
             feedback_text = g_strdup_printf("Overshot it! Try a smaller number.");
             gtk_label_set_text(GTK_LABEL(data->feedback_label), feedback_text);
             gtk_style_context_add_class(context, "warning");
         } else {
             // --- Win Condition ---
             const char *performance = get_performance(data->guess_count);
-            // --- NEW JOYFUL TEXT (with player name) ---
             feedback_text = g_strdup_printf("<span size='large' weight='bold'>You Got It, %s!</span>\n\nYou found the secret number %d in %d guesses.\nYour performance is: <span weight='bold'>%s</span>",
                                             data->player_name, guessed_num, data->guess_count, performance);
-            // Use Pango markup to allow rich text
             gtk_label_set_markup(GTK_LABEL(data->feedback_label), feedback_text);
             gtk_style_context_add_class(context, "success");
 
-            // Disable guessing and show "Play Again"
+            // --- MODIFIED: Hide unnecessary elements on win ---
             gtk_widget_set_sensitive(data->guess_entry, FALSE);
             gtk_widget_set_sensitive(data->guess_button, FALSE);
             gtk_widget_hide(data->guess_box);
+            gtk_widget_hide(data->welcome_label); // Hide welcome message
+            gtk_widget_hide(data->your_guess_label); // Hide "Your Guess:" label
             gtk_widget_show(data->play_again_button);
         }
-        // Only free if not the success case (since set_markup was not used)
         if (data->random_num != guessed_num) {
             g_free(feedback_text);
         }
     }
 
-    // Clear the guess entry and refocus it
     if (data->random_num != guessed_num) {
          gtk_entry_set_text(GTK_ENTRY(data->guess_entry), "");
          gtk_widget_grab_focus(data->guess_entry);
@@ -158,7 +149,6 @@ void on_guess_clicked(GtkButton *button, gpointer user_data) {
 // Called when the "Play Again?" button is clicked
 void on_play_again_clicked(GtkButton *button, gpointer user_data) {
     GameData *data = (GameData *)user_data;
-    // When playing again, must reset the label to not use markup
     gtk_label_set_markup(GTK_LABEL(data->feedback_label), ""); // Clear markup
     start_new_game(data);
 }
@@ -303,13 +293,11 @@ GtkWidget* create_name_screen(GameData *data) {
 
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
 
-    // --- NEW JOYFUL TEXT ---
     label = gtk_label_new("What should I call you, challenger?");
     gtk_widget_set_halign(label, GTK_ALIGN_START);
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
     data->name_entry = gtk_entry_new();
-    // --- NEW JOYFUL TEXT ---
     gtk_entry_set_placeholder_text(GTK_ENTRY(data->name_entry), "Enter your legendary name...");
     gtk_box_pack_start(GTK_BOX(vbox), data->name_entry, FALSE, FALSE, 0);
 
@@ -318,7 +306,6 @@ GtkWidget* create_name_screen(GameData *data) {
     g_signal_connect(button, "clicked", G_CALLBACK(on_start_game_clicked), data);
     gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
 
-    // Also connect "Enter" key press in the entry to the button click
     g_signal_connect(data->name_entry, "activate", G_CALLBACK(on_start_game_clicked), data);
 
     data->name_error_label = gtk_label_new("");
@@ -332,7 +319,7 @@ GtkWidget* create_name_screen(GameData *data) {
 
 // Builds the "Main Game" screen
 GtkWidget* create_game_screen(GameData *data) {
-    GtkWidget *vbox, *hbox, *label;
+    GtkWidget *vbox, *hbox; // Removed `label` from here, as we now use `data->your_guess_label`
 
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
 
@@ -342,12 +329,12 @@ GtkWidget* create_game_screen(GameData *data) {
     gtk_label_set_line_wrap(GTK_LABEL(data->welcome_label), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), data->welcome_label, FALSE, FALSE, 0);
 
-    label = gtk_label_new("Your Guess:");
-    gtk_widget_set_halign(label, GTK_ALIGN_START);
-    gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
+    // --- MODIFIED: Assign "Your Guess:" label to data->your_guess_label ---
+    data->your_guess_label = gtk_label_new("Your Guess:");
+    gtk_widget_set_halign(data->your_guess_label, GTK_ALIGN_START);
+    gtk_box_pack_start(GTK_BOX(vbox), data->your_guess_label, FALSE, FALSE, 0);
 
     // --- Guess Input Box (HBox) ---
-    // This HBox contains the guess entry and guess button
     hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     data->guess_box = hbox; // Save pointer to show/hide
 
@@ -360,13 +347,11 @@ GtkWidget* create_game_screen(GameData *data) {
     g_signal_connect(data->guess_button, "clicked", G_CALLBACK(on_guess_clicked), data);
     gtk_box_pack_start(GTK_BOX(hbox), data->guess_button, FALSE, FALSE, 0);
 
-    // Connect "Enter" key press in the entry
     g_signal_connect(data->guess_entry, "activate", G_CALLBACK(on_guess_clicked), data);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     // --- Feedback Area ---
-    // --- NEW JOYFUL TEXT ---
     data->feedback_label = gtk_label_new("What's your first guess? Let's see...");
     gtk_widget_set_name(data->feedback_label, "feedback_label"); // For CSS
     gtk_label_set_justify(GTK_LABEL(data->feedback_label), GTK_JUSTIFY_CENTER);
@@ -398,7 +383,6 @@ void activate(GtkApplication *app, gpointer user_data) {
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Number Guessing Game");
     gtk_window_set_default_size(GTK_WINDOW(window), 400, 300);
-    // Allow the window to be resizable
     gtk_window_set_resizable(GTK_WINDOW(window), TRUE);
     gtk_widget_set_name(window, "window"); // For CSS background
 
